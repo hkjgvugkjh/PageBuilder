@@ -297,11 +297,19 @@ namespace PageBuilderUtil {
   // backward compatibility with ESP8266 arduino core 3.0.0 and later.
   // However, it relies solely on the canHandle member function as a criterion
   // and lacks completeness.
+  // NOTE: In the ESP32 Arduino core v3.x, RequestHandler defines TWO
+  // overloaded canHandle() signatures, so decltype(&RequestHandler::canHandle)
+  // is ambiguous and fails to compile. There we hard-code the uri argument
+  // type (const String&), which is what the ESP32 WebServer uses.
+#if defined(ARDUINO_ARCH_ESP32) && ESP_ARDUINO_VERSION_MAJOR >= 3
+  using URI_TYPE_SIGNATURE = const String&;
+#else
   using URI_TYPE_SIGNATURE = std::conditional<
     std::is_lvalue_reference<TypeOfArgument<decltype(&RequestHandler::canHandle)>::arg<1>::type>::value,
     const String&,
     String
   >::type;
+#endif
 };
 
 /**
